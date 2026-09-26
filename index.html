@@ -2,37 +2,42 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Asset Showcase - Phaser Edition ⚡</title>
-    <!-- Memanggil Phaser.js Engine dari Internet -->
-    <script src="https://jsdelivr.net"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ Main Character - Professional Showcase ⚡</title>
     <style>
-        body { margin: 0; background: #0f1115; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; font-family: monospace; color: #e2e8f0; }
-        #game-container { border: 3px solid #1e293b; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
-        .control-panel { background: #1e293b; padding: 12px; border-radius: 8px; margin-top: 15px; text-align: center; border: 1px solid #334155; }
-        .btn { background: #e74c3c; color: white; border: none; padding: 8px 12px; margin: 4px; font-weight: bold; cursor: pointer; border-radius: 4px; font-family: monospace; }
-        .btn-green { background: #2ecc71; }
+        body { 
+            margin: 0; padding: 0; background: #0b0d11; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            min-height: 100vh; font-family: 'Segoe UI', -apple-system, sans-serif; color: #f8fafc;
+            user-select: none; -webkit-user-select: none; touch-action: manipulation;
+        }
+        .showroom-title { 
+            margin-bottom: 8px; font-weight: 800; letter-spacing: 3px; color: #38bdf8; 
+            font-size: 15px; text-transform: uppercase; text-shadow: 0 0 15px rgba(56,189,248,0.3);
+        }
+        .showroom-container { text-align: center; position: relative; padding: 10px; max-width: 95vw; }
+        canvas { 
+            border: 3px solid #1e293b; border-radius: 16px; background: #1c211b; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            image-rendering: -moz-crisp-edges; image-rendering: -webkit-crisp-edges; image-rendering: pixelated; image-rendering: crisp-edges;
+            max-width: 100%; height: auto;
+        }
+        .info-panel { 
+            background: rgba(30, 41, 59, 0.5); padding: 8px 20px; border-radius: 30px; 
+            font-size: 11px; font-family: monospace; color: #94a3b8; 
+            border: 1px solid #334155; margin-top: 10px; display: inline-block;
+            backdrop-filter: blur(4px);
+        }
+        .info-panel b { color: #f59e0b; }
     </style>
 </head>
 <body>
-
-    <h2 style="color:#38bdf8; margin-bottom:10px;">Asset Live Tester (Phaser)</h2>
-    
-    <!-- Wadah tempat game Phaser digambar -->
-    <div id="game-container"></div>
-
-    <div class="control-panel">
-        <div style="font-size:12px; color:#94a3b8; margin-bottom:5px;">🕹️ TESTING PANEL ANIMASI</div>
-        <button class="btn" id="btn-i-down">Idle Depan</button>
-        <button class="btn" id="btn-i-up">Idle Belakang</button>
-        <button class="btn" id="btn-i-side">Idle Samping</button>
+    <div class="showroom-container">
+        <div class="showroom-title">⚡ Live Asset Showcase ⚡</div>
+        <canvas id="gameCanvas" width="1200" height="840"></canvas>
         <br>
-        <button class="btn btn-green" id="btn-w-down">Walk Depan</button>
-        <button class="btn btn-green" id="btn-w-up">Walk Belakang</button>
-        <button class="btn btn-green" id="btn-w-side">Walk Samping</button>
+        <div class="info-panel">Sistem Kendali: <b id="status-txt">IDLE</b> • Mode: <b>UI Button D-Pad</b></div>
     </div>
-
-    <!-- Memanggil script logika game -->
     <script src="script.js"></script>
 </body>
 </html>

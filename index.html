@@ -2,31 +2,42 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pameran Aset Pixel Art</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚡ Main Character - Asset Showcase ⚡</title>
     <style>
-        body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; font-family: monospace; color: white; }
-        canvas { border: 4px solid #fff; background: #4a7c59; image-rendering: pixelated; margin-bottom: 15px; }
-        .control-panel { background: #2c3e50; padding: 15px; border-radius: 8px; text-align: center; }
-        .btn { background: #e74c3c; color: white; border: none; padding: 10px 15px; margin: 5px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .btn-green { background: #2ecc71; }
+        body { 
+            margin: 0; padding: 0; background: #0f1115; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            min-height: 100vh; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; color: #e2e8f0;
+            user-select: none; -webkit-user-select: none; touch-action: manipulation;
+        }
+        .showroom-title { margin-bottom: 5px; font-weight: 700; letter-spacing: 2px; color: #38bdf8; font-size: 18px; text-transform: uppercase; }
+        .showroom-container { text-align: center; position: relative; padding: 10px; }
+        canvas { 
+            border: 3px solid #1e293b; border-radius: 12px; background: #232922; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            image-rendering: -moz-crisp-edges; image-rendering: -webkit-crisp-edges; image-rendering: pixelated; image-rendering: crisp-edges;
+            max-width: 100%; height: auto;
+        }
+        /* Desain Baru Panel Bawah Minimalis */
+        .info-panel { background: #1e293b; padding: 10px 20px; border-radius: 30px; font-size: 12px; font-family: monospace; color: #94a3b8; border: 1px solid #334155; margin-top: 5px; display: inline-block; }
+        .info-panel b { color: #f1c40f; }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="600" height="420"></canvas>
-    <div class="control-panel">
-        <div>🕹️ PANEL UJI COBA ANIMASI (6 FRAME)</div>
-        <button class="btn" id="btn-i-down">Idle Depan</button>
-        <button class="btn" id="btn-i-up">Idle Belakang</button>
-        <button class="btn" id="btn-i-right">Idle Kanan</button>
-        <button class="btn" id="btn-i-left">Idle Kiri</button>
+
+    <div class="showroom-container">
+        <div class="showroom-title">Asset Live Tester</div>
+        <!-- Area Kanvas Game -->
+        <canvas id="gameCanvas" width="600" height="420"></canvas>
         <br>
-        <button class="btn btn-green" id="btn-w-down">Walk Depan</button>
-        <button class="btn btn-green" id="btn-w-up">Walk Belakang</button>
-        <button class="btn btn-green" id="btn-w-right">Walk Kanan</button>
-        <button class="btn btn-green" id="btn-w-left">Walk Kiri</button>
+        <!-- Panel Info Status -->
+        <div class="info-panel">
+            Mekanik: 4-Direction Walk Cycle (6 Frame) • Status: <b id="status-txt">IDLE</b>
+        </div>
     </div>
-    <!-- Memanggil file script kedua -->
+
+    <!-- Memanggil script logika pergerakan joystick -->
     <script src="script.js"></script>
 </body>
 </html>

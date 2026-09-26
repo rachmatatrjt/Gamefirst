@@ -1,165 +1,86 @@
-window.onload = function() {
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-    const statusTxt = document.getElementById("status-txt");
-
-    // Matikan pemulusan gambar di awal agar pixel art tajam
-    ctx.imageSmoothingEnabled = false;
-
-    // ========================================================
-    // 1. BARU: MEMUAT GAMBAR BACKGROUND PIJAKAN (TERRAIN NOMOR 4)
-    // ========================================================
-    const imgBackground = new Image();
-    imgBackground.src = "background_level.png"; // Memanggil file peta rakitan Aseprite Anda
-
-    // MEMUAT SPRITESHEETS UTAMA KARAKTER
-    const imgIdleDown = new Image(); imgIdleDown.src = "Main_character-Idle_down-Base_body-Engine.png";
-    const imgIdleUp   = new Image(); imgIdleUp.src   = "Main_character-Idle_up-Base_body-Engine.png";
-    const imgIdleSide = new Image(); imgIdleSide.src = "Main_character-Idle_side-Base_body-Engine.png";
-    const imgWalkDown = new Image(); imgWalkDown.src = "Main_character-Walk_down-Base_body-Engine.png";
-    const imgWalkUp   = new Image(); imgWalkUp.src   = "Main_character-Walk_up-Base_body-Engine.png";
-    const imgWalkSide = new Image(); imgWalkSide.src = "Main_character-Walk_side-Base_body-Engine.png";
-
-    // 2. DATA UTAMA KARAKTER
-    let player = { x: 250, y: 150, size: 32, scale: 3.5, speed: 2.2, direction: "down", isFlipped: false, state: "idle", currentFrame: 0, animTimer: 0, animSpeed: 8 };
-    let displaySize = player.size * player.scale;
-    let keys = {};
-
-    // 3. DATA VIRTUAL JOYSTICK
-    let joystick = { x: 500, y: 320, outerRadius: 55, innerRadius: 25, touchX: 500, touchY: 320, isDragging: false };
-
-    // Input Keyboard Fisik
-    window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-    window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-    // Logika Sentuh Layar & Mouse
-    function handleStart(posX, posY) {
-        let rect = canvas.getBoundingClientRect();
-        let canvasX = (posX - rect.left) * (canvas.width / rect.width);
-        let canvasY = (posY - rect.top) * (canvas.height / rect.height);
-        let dist = Math.hypot(canvasX - joystick.x, canvasY - joystick.y);
-        if (dist < joystick.outerRadius) { joystick.isDragging = true; handleMove(posX, posY); }
-    }
-
-    function handleMove(posX, posY) {
-        if (!joystick.isDragging) return;
-        let rect = canvas.getBoundingClientRect();
-        let canvasX = (posX - rect.left) * (canvas.width / rect.width);
-        let canvasY = (posY - rect.top) * (canvas.height / rect.height);
-        let angle = Math.atan2(canvasY - joystick.y, canvasX - joystick.x);
-        let dist = Math.hypot(canvasX - joystick.x, canvasY - joystick.y);
-        if (dist > joystick.outerRadius) dist = joystick.outerRadius;
-        joystick.touchX = joystick.x + Math.cos(angle) * dist;
-        joystick.touchY = joystick.y + Math.sin(angle) * dist;
-    }
-
-    function handleEnd() { joystick.isDragging = false; joystick.touchX = joystick.x; joystick.touchY = joystick.y; }
-
-    canvas.addEventListener("mousedown", e => handleStart(e.clientX, e.clientY));
-    window.addEventListener("mousemove", e => handleMove(e.clientX, e.clientY));
-    window.addEventListener("mouseup", handleEnd);
-    canvas.addEventListener("touchstart", e => { e.preventDefault(); handleStart(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
-    window.addEventListener("touchmove", e => { handleMove(e.touches[0].clientX, e.touches[0].clientY); });
-    window.addEventListener("touchend", handleEnd);
-
-    // 4. ENGINE LOGIC UPDATE
-    function updateGame() {
-        let movingX = 0, movingY = 0;
-
-        if (keys["arrowup"] || keys["w"]) movingY = -1;
-        if (keys["arrowdown"] || keys["s"]) movingY = 1;
-        if (keys["arrowleft"] || keys["a"]) movingX = -1;
-        if (keys["arrowright"] || keys["d"]) movingX = 1;
-
-        if (joystick.isDragging) {
-            let dx = joystick.touchX - joystick.x;
-            let dy = joystick.touchY - joystick.y;
-            if (Math.abs(dx) > 12) movingX = Math.sign(dx);
-            if (Math.abs(dy) > 12) movingY = Math.sign(dy);
-        }
-
-        if (movingX !== 0 || movingY !== 0) {
-            player.state = "walk"; statusTxt.innerText = "WALKING";
-            player.x += movingX * player.speed; player.y += movingY * player.speed;
-            if (movingY === -1) player.direction = "up";
-            if (movingY === 1)  player.direction = "down";
-            if (movingX === 1) { player.direction = "side"; player.isFlipped = false; }
-            else if (movingX === -1) { player.direction = "side"; player.isFlipped = true; }
-        } else {
-            player.state = "idle"; statusTxt.innerText = "IDLE";
-        }
-        
-        player.x = Math.max(0, Math.min(canvas.width - displaySize, player.x));
-        player.y = Math.max(0, Math.min(canvas.height - 130, player.y)); // Membatasi agar tidak menembus batas bawah area joystick
-    }
-
-    // 5. RENDERING GRAPHIC SYSTEM
-    function drawGame() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Memaksa ulang setelan pixelated di dalam loop agar tetap tajam
-        ctx.imageSmoothingEnabled = false;
-
-        // ========================================================
-        // A. BARU: MENGGAMBAR PIJAKAN LATAR BELAKANG TERRAIN
-        // ========================================================
-        if (imgBackground.complete && imgBackground.naturalWidth > 0) {
-            ctx.drawImage(imgBackground, 0, 0, canvas.width, canvas.height);
-        } else {
-            // Gambar warna dasar fallback jika gambar background belum selesai di-load
-            ctx.fillStyle = "#2a3d2e";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // B. MENGGAMBAR KARAKTER UTAMA
-        let activeImg = imgIdleDown;
-        if (player.state === "idle") {
-            if (player.direction === "down") activeImg = imgIdleDown;
-            if (player.direction === "up")   activeImg = imgIdleUp;
-            if (player.direction === "side") activeImg = imgIdleSide;
-        } else {
-            if (player.direction === "down") activeImg = imgWalkDown;
-            if (player.direction === "up")   activeImg = imgWalkUp;
-            if (player.direction === "side") activeImg = imgWalkSide;
-        }
-
-        if (activeImg.complete && activeImg.naturalWidth > 0) {
-            let clipX = player.currentFrame * player.size;
-            ctx.save();
-            if (player.isFlipped) {
-                ctx.translate(player.x + displaySize, player.y); ctx.scale(-1, 1);
-                ctx.drawImage(activeImg, clipX, 0, player.size, player.size, 0, 0, displaySize, displaySize);
-            } else {
-                ctx.drawImage(activeImg, clipX, 0, player.size, player.size, player.x, player.y, displaySize, displaySize);
-            }
-            ctx.restore();
-        }
-
-        // C. DRAW VIRTUAL JOYSTICK OVERLAY
-        ctx.getTransform(); // Menjaga transform aman
-        ctx.beginPath(); ctx.arc(joystick.x, joystick.y, joystick.outerRadius, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(15, 23, 42, 0.4)"; ctx.fill();
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.5)"; ctx.lineWidth = 3; ctx.stroke();
-
-        ctx.beginPath(); ctx.arc(joystick.touchX, joystick.touchY, joystick.innerRadius, 0, Math.PI * 2);
-        ctx.fillStyle = joystick.isDragging ? "rgba(56, 189, 248, 0.8)" : "rgba(148, 163, 184, 0.6)"; ctx.fill();
-        ctx.stroke();
-
-        // HUD Informasi Atas
-        ctx.fillStyle = "rgba(15, 17, 21, 0.7)"; ctx.fillRect(15, 15, 340, 26);
-        ctx.fillStyle = "#38bdf8"; ctx.font = "bold 11px monospace"; ctx.fillText("🎮 KONTROL: TEKAN WASD / GESER JOYSTICK HP", 25, 32);
-    }
-
-    function gameLoop() {
-        updateGame();
-        drawGame();
-        // Animasi 6 Frame terus berjalan
-        player.animTimer++;
-        if (player.animTimer >= player.animSpeed) { 
-            player.animTimer = 0; 
-            player.currentFrame = (player.currentFrame + 1) % 6; 
-        }
-        requestAnimationFrame(gameLoop);
-    }
-    gameLoop();
+// 1. KONFIGURASI ENGINE GAMES (PHASER SETTINGS)
+const config = {
+    type: Phaser.AUTO,
+    width: 600,
+    height: 420,
+    parent: 'game-container',
+    pixelArt: true, // PAKSA SEMUA PIXEL ART TAJAM & PIXELATED OTOMATIS!
+    physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+    scene: { preload: preload, create: create, update: update }
 };
+
+const game = new Phaser.Game(config);
+let player;
+let cursors;
+let wasd;
+
+// 2. LOAD SEMUA ASSETS (PNG AUTOMATION)
+function preload() {
+    this.load.image('bg', 'background_level.png');
+    this.load.spritesheet('i_down', 'Main_character-Idle_down-Base_body-Engine.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('i_up', 'Main_character-Idle_up-Base_body-Engine.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('i_side', 'Main_character-Idle_side-Base_body-Engine.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('w_down', 'Main_character-Walk_down-Base_body-Engine.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('w_up', 'Main_character-Walk_up-Base_body-Engine.png', { frameWidth: 32, frameHeight: 32 });
+    this.load.spritesheet('w_side', 'Main_character-Walk_side-Base_body-Engine.png', { frameWidth: 32, frameHeight: 32 });
+}
+
+// 3. SETUP ENGINES & DAFTAR ANIMASI (6 FRAMES)
+function create() {
+    // Gambar Background Peta
+    this.add.image(300, 210, 'bg').setDisplaySize(600, 420);
+
+    // Setup Karakter (Skala diperbesar 5x Lipat)
+    player = this.physics.add.sprite(300, 200, 'i_down').setScale(5);
+    
+    // COLLISION BOX: Mengunci Karakter di Batas Margin Peta 530x300 Anda
+    player.setCollideWorldBounds(true);
+    this.physics.world.setBounds(35, 35, 530, 250); 
+
+    // Setup Input Kontrol Keyboard
+    cursors = this.input.keyboard.createCursorKeys();
+    wasd = this.input.keyboard.addKeys('W,A,S,D');
+
+    // Mendaftarkan Siklus Animasi 6-Frame ke Sistem Engine
+    const createAnim = (key, texture) => {
+        this.anims.create({ key: key, frames: this.anims.generateFrameNumbers(texture, { start: 0, end: 5 }), frameRate: 8, repeat: -1 });
+    };
+    createAnim('idle_down', 'i_down'); createAnim('idle_up', 'i_up'); createAnim('idle_side', 'i_side');
+    createAnim('walk_down', 'w_down'); createAnim('walk_up', 'w_up'); createAnim('walk_side', 'w_side');
+
+    player.play('idle_down');
+
+    // Menghubungkan Fungsi Klik Tombol UI Bawah Layar
+    document.getElementById('btn-i-down').onclick = () => { player.play('idle_down'); player.setFlipX(false); };
+    document.getElementById('btn-i-up').onclick   = () => { player.play('idle_up');   player.setFlipX(false); };
+    document.getElementById('btn-i-side').onclick = () => { player.play('idle_side'); player.setFlipX(false); };
+    document.getElementById('btn-w-down').onclick = () => { player.play('walk_down'); player.setFlipX(false); };
+    document.getElementById('btn-w-up').onclick   = () => { player.play('walk_up');   player.setFlipX(false); };
+    document.getElementById('btn-w-side').onclick = () => { player.play('walk_side'); player.setFlipX(false); };
+}
+
+// 4. LOGIKA UPDATE PERGERAKAN KEYBOARD
+function update() {
+    player.setVelocity(0);
+    let moving = false;
+
+    if (cursors.left.isDown || wasd.A.isDown) {
+        player.setVelocityX(-150); player.play('walk_side', true); player.setFlipX(true); moving = true;
+    } else if (cursors.right.isDown || wasd.D.isDown) {
+        player.setVelocityX(150); player.play('walk_side', true); player.setFlipX(false); moving = true;
+    }
+
+    if (cursors.up.isDown || wasd.W.isDown) {
+        player.setVelocityY(-150); if(!moving) player.play('walk_up', true); moving = true;
+    } else if (cursors.down.isDown || wasd.S.isDown) {
+        player.setVelocityY(150); if(!moving) player.play('walk_down', true); moving = true;
+    }
+
+    // Deteksi Tombol Lepas: Otomatis kembali ke Idle sesuai arah hadap terakhir
+    if (!moving && player.anims.currentAnim) {
+        let currentKey = player.anims.currentAnim.key;
+        if (currentKey === 'walk_side') player.play('idle_side', true);
+        if (currentKey === 'walk_up') player.play('idle_up', true);
+        if (currentKey === 'walk_down') player.play('idle_down', true);
+    }
+}

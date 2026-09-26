@@ -15,10 +15,9 @@ const imgWalkDown = new Image(); imgWalkDown.src = "Main_character-Walk_down-Bas
 const imgWalkUp   = new Image(); imgWalkUp.src   = "Main_character-Walk_up-Base_body-Engine.png";
 const imgWalkSide = new Image(); imgWalkSide.src = "Main_character-Walk_side-Base_body-Engine.png";
 
-// Aset 3 Status Gambar Ubin Tombol Anda
-const btnNormal = new Image(); btnNormal.src = "btn_normal.png";
-const btnHover  = new Image(); btnHover.src  = "btn_hover.png";
-const btnActive = new Image(); btnActive.src = "btn_active.png";
+const urlNormal = "url('btn_normal.png')";
+const urlHover  = "url('btn_hover.png')";
+const urlActive = "url('btn_active.png')";
 
 // ========================================================
 // 2. DATA UTAMA KARAKTER & CONFIG
@@ -27,79 +26,44 @@ let player = { x: 500, y: 350, size: 32, scale: 5.0, speed: 3.0, direction: "dow
 let displaySize = player.size * player.scale;
 let keys = {};
 
-// ========================================================
-// 3. DAFTAR KOORDINAT 4 BUTTON UI (SERASI & ERGONOMIS)
-// ========================================================
-// Diletakkan rapi di pojok kiri bawah kanvas dengan ukuran ubin 72x72 pixel
-let buttons = {
-    up:    { x: 132, y: 590, w: 72, h: 72, state: "normal" },
-    down:  { x: 132, y: 734, w: 72, h: 72, state: "normal" },
-    left:  { x: 50,  y: 662, w: 72, h: 72, state: "normal" },
-    right: { x: 214, y: 662, w: 72, h: 72, state: "normal" }
-};
-
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
 // ========================================================
-// 4. LOGIKA DETEKSI SENTUHAN / KLIK
+// 3. MENGIKAT INPUT DPAD DI LUAR KANVAS
 // ========================================================
-function getCanvasTouchPos(clientX, clientY) {
-    let rect = canvas.getBoundingClientRect();
-    return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height)
-    };
-}
+const dpadIds = { up: "btn-up", down: "btn-down", left: "btn-left", right: "btn-right" };
 
-function checkButtonClick(posX, posY, isInputEnd = false) {
-    let p = getCanvasTouchPos(posX, posY);
-    let anyButtonPressed = false;
+for (let direction in dpadIds) {
+    let btnElement = document.getElementById(dpadIds[direction]);
+    if (btnElement) {
+        btnElement.style.backgroundImage = urlNormal;
+        
+        btnElement.addEventListener("mouseenter", () => { if(!keys[direction]) btnElement.style.backgroundImage = urlHover; });
+        btnElement.addEventListener("mouseleave", () => { if(!keys[direction]) btnElement.style.backgroundImage = urlNormal; });
 
-    for (let key in buttons) {
-        let b = buttons[key];
-        if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) {
-            if (isInputEnd) {
-                b.state = "normal";
-            } else {
-                b.state = "active";
-                keys[key] = true;
-                anyButtonPressed = true;
-            }
-        } else {
-            if (!isInputEnd) b.state = "normal";
-            if (!anyButtonPressed && !isInputEnd) keys[key] = false;
-        }
+        const startPress = (e) => {
+            e.preventDefault();
+            keys[direction] = true;
+            btnElement.style.backgroundImage = urlActive;
+        };
+        btnElement.addEventListener("mousedown", startPress);
+        btnElement.addEventListener("touchstart", startPress, {passive: false});
     }
 }
 
-function clearAllButtons() {
-    for (let key in buttons) {
-        buttons[key].state = "normal";
-        keys[key] = false;
+const endPressAll = () => {
+    for (let direction in dpadIds) {
+        keys[direction] = false;
+        let btnElement = document.getElementById(dpadIds[direction]);
+        if (btnElement) btnElement.style.backgroundImage = urlNormal;
     }
-}
-
-canvas.addEventListener("mousedown", e => checkButtonClick(e.clientX, e.clientY));
-canvas.addEventListener("mousemove", e => {
-    let p = getCanvasTouchPos(e.clientX, e.clientY);
-    for (let key in buttons) {
-        let b = buttons[key];
-        if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) {
-            if (b.state !== "active") b.state = "hover";
-        } else {
-            if (b.state !== "active") b.state = "normal";
-        }
-    }
-});
-window.addEventListener("mouseup", clearAllButtons);
-
-canvas.addEventListener("touchstart", e => { e.preventDefault(); checkButtonClick(e.touches.clientX, e.touches.clientY); }, {passive:false});
-canvas.addEventListener("touchmove", e => { checkButtonClick(e.touches.clientX, e.touches.clientY); });
-window.addEventListener("touchend", clearAllButtons);
+};
+window.addEventListener("mouseup", endPressAll);
+window.addEventListener("touchend", endPressAll);
 
 // ========================================================
-// 5. ENGINE LOGIC UPDATE (COLLISION SYSTEM)
+// 4. ENGINE LOGIC UPDATE (COLLISION AREA)
 // ========================================================
 function updateGame() {
     let movingX = 0, movingY = 0;
@@ -120,28 +84,26 @@ function updateGame() {
         player.state = "idle"; statusTxt.innerText = "IDLE";
     }
     
-    // Kunci Pergerakan Karakter di Zona Aman
     if (player.x < 15) player.x = 15;
-    if (player.x > canvas.width - displaySize - 15) player.x = canvas.width - displaySize - 15;
-    if (player.y < 0) player.y = 0;
-    if (player.y > canvas.height - displaySize - 260) player.y = canvas.height - displaySize - 260; 
+    if (player.x > canvas.width - displaySize - 10) player.x = canvas.width - displaySize - 10;
+    
+    if (player.y < 0) player.y = 0; 
+    if (player.y > canvas.height - displaySize - 150) player.y = canvas.height - displaySize - 150;
 }
 
 // ========================================================
-// 6. RENDERING GRAPHIC SYSTEM
+// 5. RENDERING GRAPHIC SYSTEM
 // ========================================================
 function drawGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
 
-    // A. Gambar Pijakan Background
     if (imgBackground.complete && imgBackground.naturalWidth > 0) {
         ctx.drawImage(imgBackground, 0, 0, canvas.width, canvas.height);
     } else {
-        ctx.fillStyle = "#161a14"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#141913"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // B. Gambar Player Aseprite
     let activeImg = imgIdleDown;
     if (player.state === "idle") {
         if (player.direction === "down") activeImg = imgIdleDown;
@@ -165,25 +127,11 @@ function drawGame() {
         ctx.restore();
     }
 
-    // C. MENGGAMBAR UI BUTTONS TANPA TEKS (MURNI PIXEL ART ANDA)
-    for (let key in buttons) {
-        let b = buttons[key];
-        let currentBtnImg = btnNormal;
-
-        if (b.state === "hover") currentBtnImg = btnHover;
-        if (b.state === "active") currentBtnImg = btnActive;
-
-        if (currentBtnImg.complete && currentBtnImg.naturalWidth > 0) {
-            ctx.drawImage(currentBtnImg, b.x, b.y, b.w, b.h);
-        } else {
-            ctx.fillStyle = b.state === "active" ? "rgba(56, 189, 248, 0.4)" : "rgba(30, 41, 59, 0.4)";
-            ctx.fillRect(b.x, b.y, b.w, b.h);
-        }
-    }
-
-    // HUD Petunjuk Atas Kanvas (Transparan & Estetik)
-    ctx.fillStyle = "rgba(9, 10, 15, 0.6)"; ctx.fillRect(15, 15, 335, 26);
-    ctx.fillStyle = "#38bdf8"; ctx.font = "bold 11px monospace"; ctx.fillText("⚡ WASD KEYBOARD / TOUCH RETRO BUTTON D-PAD", 25, 32);
+    // HUD Petunjuk Atas Kanvas (Warna Tembaga Redup Harmonis)
+    ctx.fillStyle = "rgba(9, 10, 15, 0.7)"; ctx.fillRect(15, 15, 435, 26);
+    ctx.fillStyle = "#a48c64"; // MODIFIKASI FONT: Menggunakan warna emas tembaga redup low-contrast
+    ctx.font = "11px monospace"; 
+    ctx.fillText("WASD KEYBOARD / TOUCH RETRO BUTTON D-PAD", 25, 32);
 }
 
 function gameLoop() {
